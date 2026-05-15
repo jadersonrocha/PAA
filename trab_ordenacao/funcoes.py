@@ -1,9 +1,10 @@
-from tkinter import messagebox
 import random
+import time
 
 # Bubble Sort 
 def bubbleSort(lista): 
     comparacoes = 0 # conta o numero de comprações
+    trocas = 0
     n = len(lista)
 
     for i in range(n):
@@ -11,12 +12,14 @@ def bubbleSort(lista):
             comparacoes += 1
             if lista[j] > lista[j + 1]: # Se o elemento atual é maior que o próximo elemento
                 lista[j], lista[j + 1] = lista[j + 1], lista[j] # Trocamos os elementos de lugar.
+                trocas += 1
 
-    return lista, comparacoes
+    return lista, comparacoes, trocas
 
 #Insertion Sort 
 def insertionSort(lista):         
     comparacoes = 0
+    trocas = 0
 
     for j in range(1, len(lista)):
         chave = lista[j]
@@ -26,19 +29,21 @@ def insertionSort(lista):
             comparacoes += 1 # contagem das comparações
             if chave < lista[i]:
                 lista[i + 1] = lista[i]
+                trocas += 1
                 i -= 1
             else:
                 break
         lista[i + 1] = chave
 
-    return lista, comparacoes
+    return lista, comparacoes, trocas
 
 # mergeSort
 def mergeSort(lista):
     comparacoes = 0
+    trocas = 0
 
     def ordenar(valores):  
-        nonlocal comparacoes
+        nonlocal comparacoes, trocas
 
         if len(valores) <= 1:
             return valores
@@ -59,57 +64,68 @@ def mergeSort(lista):
             else:
                 resultado.append(direita[j])
                 j += 1
+            trocas += 1
 
         resultado.extend(esquerda[i:])
+        trocas += len(esquerda) - i
         resultado.extend(direita[j:])
+        trocas += len(direita) - j
         return resultado
 
-    return ordenar(lista), comparacoes
+    return ordenar(lista), comparacoes, trocas
 
 # função usada pela heapsort
-def heapify(lista, n, i, comparacoes):
+def heapify(lista, n, i, comparacoes, trocas):
     maior_elemento = i
     ld_esq = 2 * i + 1 # índice do filho da esquerda
     ld_dir = 2 * i + 2 # índice do filho da direita
     
     # verificar o filho da esquerda
-    if ld_esq < n and lista[ld_esq] > lista[maior_elemento]: # se o filho da esquerda for maior que a raiz
-        maior_elemento = ld_esq
+    if ld_esq < n:
+        comparacoes[0] += 1
+        if lista[ld_esq] > lista[maior_elemento]:
+            maior_elemento = ld_esq
 
     # verificar o filho da direita
-    if ld_dir < n and lista[ld_dir] > lista[maior_elemento]: # se o filho da direita for maior que o maior elemento encontrado até agora
-        maior_elemento = ld_dir
+    if ld_dir < n:
+        comparacoes[0] += 1
+        if lista[ld_dir] > lista[maior_elemento]:
+            maior_elemento = ld_dir
 
     # caso o maior elemento nao seja a raiz
     if maior_elemento != i:
         lista[i], lista[maior_elemento] = lista[maior_elemento], lista[i] #realizar a troca 
-        comparacoes[0] += 1
-        heapify(lista, n, maior_elemento, comparacoes) # realiza a recursão
+        trocas[0] += 1
+        heapify(lista, n, maior_elemento, comparacoes, trocas) # realiza a recursão
 
 def heapSort(lista):
     n = len(lista)
     comparacoes = [0]
+    trocas = [0]
 
     for i in range(n // 2 - 1, -1, -1): # Construir o heap
-        heapify(lista, n, i, comparacoes) # Realizar a ordenação
+        heapify(lista, n, i, comparacoes, trocas) # Realizar a ordenação
 
     for i in range(n - 1, 0, -1): # Extrair elementos do heap
         lista[0], lista[i] = lista[i], lista[0] # Troca o maior elemento com o ultimo elemento  do heap
-        comparacoes[0] += 1
-        
-        heapify(lista, i, 0, comparacoes) # 
+        trocas[0] += 1
+        heapify(lista, i, 0, comparacoes, trocas) # 
     
-    return lista, comparacoes[0]    # Geração de Listas
-
-import random
+    return lista, comparacoes[0], trocas[0]    # Geração de Listas
 
 def quick_sort(vetor):
     comparacoes = [0]
+    trocas = [0]
+
+    def trocar(i, j):
+        if i != j:
+            vetor[i], vetor[j] = vetor[j], vetor[i]
+            trocas[0] += 1
 
     def particionar(inicio, fim):
         # Escolhe pivô aleatório e coloca no fim
         indice_pivo = random.randint(inicio, fim)
-        vetor[indice_pivo], vetor[fim] = vetor[fim], vetor[indice_pivo] # 
+        trocar(indice_pivo, fim)
 
         pivo = vetor[fim]
         i = inicio - 1
@@ -118,9 +134,9 @@ def quick_sort(vetor):
             comparacoes[0] += 1
             if vetor[j] <= pivo:
                 i += 1
-                vetor[i], vetor[j] = vetor[j], vetor[i]
+                trocar(i, j)
 
-        vetor[i + 1], vetor[fim] = vetor[fim], vetor[i + 1]
+        trocar(i + 1, fim)
         return i + 1
 
     def quicksort_rec(inicio, fim):
@@ -130,7 +146,7 @@ def quick_sort(vetor):
             quicksort_rec(posicao_pivo + 1, fim)
 
     quicksort_rec(0, len(vetor) - 1)
-    return vetor, comparacoes[0]
+    return vetor, comparacoes[0], trocas[0]
 
 
 def lista_crescente(tamanho):
@@ -141,7 +157,6 @@ def lista_decrescente(tamanho):
     return list(range(tamanho, 0, -1))
 
 def lista_aleatoria(tamanho):
-    import random
     return [random.randint(1, 100) for _ in range(tamanho)]
 
 
@@ -185,250 +200,201 @@ def executar_comparacao(lista, executar_bubble=True, executar_insertion=True, ex
     Executa a comparação entre algoritmos de ordenação. 
     
     """
-    import time
+   
     
     resultados = {}
     
     if executar_bubble:
-        inicio = time.time()
         lista_copia = lista.copy()
-        resultado_bubble, comparacoes_bubble = bubbleSort(lista_copia)
-        tempo_bubble = time.time() - inicio
+        inicio = time.perf_counter() # medindo o tempo de execução
+        resultado_bubble, comparacoes_bubble, trocas_bubble = bubbleSort(lista_copia)
+        tempo_bubble = time.perf_counter() - inicio
         
         resultados['bubble'] = {
             'resultado': resultado_bubble,
             'tempo': tempo_bubble,
-            'comparacoes': comparacoes_bubble
+            'comparacoes': comparacoes_bubble,
+            'trocas': trocas_bubble
         }
     
     if executar_insertion:
-        inicio = time.time()
         lista_copia = lista.copy()
-        resultado_insertion, comparacoes_insertion = insertionSort(lista_copia)
-        tempo_insertion = time.time() - inicio
+        inicio = time.perf_counter() # medindo o tempo de execução
+        resultado_insertion, comparacoes_insertion, trocas_insertion = insertionSort(lista_copia)
+        tempo_insertion = time.perf_counter() - inicio
         
         resultados['insertion'] = {
             'resultado': resultado_insertion,
             'tempo': tempo_insertion,
-            'comparacoes': comparacoes_insertion
+            'comparacoes': comparacoes_insertion,
+            'trocas': trocas_insertion
         }
     
     if executar_mergesort:
-        inicio = time.time()
         lista_copia = lista.copy()
-        resultado_mergesort, comparacoes_mergesort = mergeSort(lista_copia)
-        tempo_mergesort = time.time() - inicio
-        comparacoes_mergesort = len(lista) * (len(lista).bit_length() - 1) # comparações aproximadas para Merge Sort: n log n, onde log n é o número de níveis na recursão (bit_length - 1)
+        inicio = time.perf_counter()
+        resultado_mergesort, comparacoes_mergesort, trocas_mergesort = mergeSort(lista_copia)
+        tempo_mergesort = time.perf_counter() - inicio
         
         resultados['mergesort'] = {
             'resultado': resultado_mergesort,
             'tempo': tempo_mergesort,
-            'comparacoes': comparacoes_mergesort
+            'comparacoes': comparacoes_mergesort,
+            'trocas': trocas_mergesort
         }
 
     if executar_heapsort:
-        inicio = time.time()
         lista_copia = lista.copy()
-        resultado_heapsort, comparacoes_heapsort = heapSort(lista_copia)
-        tempo_heapsort = time.time() - inicio
+        inicio = time.perf_counter()
+        resultado_heapsort, comparacoes_heapsort, trocas_heapsort = heapSort(lista_copia)
+        tempo_heapsort = time.perf_counter() - inicio
         
         resultados['heapsort'] = {
             'resultado': resultado_heapsort,
             'tempo': tempo_heapsort,
-            'comparacoes': comparacoes_heapsort
+            'comparacoes': comparacoes_heapsort,
+            'trocas': trocas_heapsort
         } 
 
     if executar_quicksort:
-        inicio = time.time()
         lista_copia = lista.copy()
-        resultado_quicksort, comparacoes_quicksort = heapSort(lista_copia)
-        tempo_quicksort = time.time() - inicio
+        inicio = time.perf_counter()
+        resultado_quicksort, comparacoes_quicksort, trocas_quicksort = quick_sort(lista_copia)
+        tempo_quicksort = time.perf_counter() - inicio
         
         resultados['quicksort'] = {
             'resultado': resultado_quicksort,
             'tempo': tempo_quicksort,
-            'comparacoes': comparacoes_quicksort
+            'comparacoes': comparacoes_quicksort,
+            'trocas': trocas_quicksort
         }           
     
     return resultados
 
 
-def calcular_desempenho(tempo_bubble, tempo_insertion, tempo_merge, tempo_heapsort, tempo_quicksort):
-    """
-    Calcula a análise comparativa de desempenho entre dois algoritmos.
-    
-    """
-    if tempo_bubble < tempo_insertion and tempo_bubble < tempo_merge:
-        diferenca = tempo_insertion - tempo_bubble
-        percentual = (diferenca / tempo_insertion) * 100
-        vencedor = "Bubble Sort"
-        mais_rapido = True
 
-    elif tempo_merge < tempo_bubble and tempo_merge < tempo_insertion:
-        diferenca_bubble = tempo_bubble - tempo_merge
-        diferenca_insertion = tempo_insertion - tempo_merge
-        percentual_bubble = (diferenca_bubble / tempo_bubble) * 100
-        percentual_insertion = (diferenca_insertion / tempo_insertion) * 100
+def avaliacao_comparacao(lista, num_repeticoes=3, executar_bubble=True, executar_insertion=True, executar_mergesort=True, executar_heapsort=True, executar_quicksort=True):
+    
+    # Executa a comparação entre algoritmos de ordenação 3 vezes e calcula a média. 
+    # Retorna um dicionário com os resultados de cada algoritmo, incluindo o resultado ordenado, 
+    # tempo médio, tempos individuais, número de comparações e trocas.     
+    
+    resultados = {}
+    
+    if executar_bubble:
+        tempos_bubble = []
+        comparacoes_bubble = 0
+        trocas_bubble = 0
         
-        vencedor = "Merge Sort"
-        mais_rapido = True
-        return {
-            'vencedor': vencedor,
-            'diferenca_bubble': diferenca_bubble,
-            'percentual_bubble': percentual_bubble,
-            'diferenca_insertion': diferenca_insertion,
-            'percentual_insertion': percentual_insertion,
-            'merge_mais_rapido': True
+        for _ in range(num_repeticoes): # Executa o algoritmo varias vezes (3x) para efetuar a media
+            lista_copia = lista.copy()
+            inicio = time.perf_counter()
+            resultado_bubble, comp, troc = bubbleSort(lista_copia) # Retorna o resultado da ordenação
+            tempo = time.perf_counter() - inicio # calcula o tempo de ordenação da lista
+            tempos_bubble.append(tempo) # Recebe o tempo de cada ordenação, para calculo da média.
+            comparacoes_bubble = comp  # São iguais em todas as repetições
+            trocas_bubble = troc
+        
+        tempo_medio = sum(tempos_bubble) / num_repeticoes # calcula o tempo médio de ordenacao
+        resultados['bubble'] = {
+            'resultado': resultado_bubble,
+            'tempo_medio': tempo_medio,
+            'tempos': tempos_bubble,
+            'comparacoes': comparacoes_bubble,
+            'trocas': trocas_bubble
+        }
+    
+    if executar_insertion:
+        tempos_insertion = []
+        comparacoes_insertion = 0
+        trocas_insertion = 0
+        
+        for _ in range(num_repeticoes):
+            lista_copia = lista.copy()
+            inicio = time.perf_counter()
+            resultado_insertion, comp, troc = insertionSort(lista_copia)
+            tempo = time.perf_counter() - inicio
+            tempos_insertion.append(tempo)
+            comparacoes_insertion = comp
+            trocas_insertion = troc
+        
+        tempo_medio = sum(tempos_insertion) / num_repeticoes
+        resultados['insertion'] = {
+            'resultado': resultado_insertion,
+            'tempo_medio': tempo_medio,
+            'tempos': tempos_insertion,
+            'comparacoes': comparacoes_insertion,
+            'trocas': trocas_insertion
+        }
+    
+    if executar_mergesort:
+        tempos_mergesort = []
+        comparacoes_mergesort = 0
+        trocas_mergesort = 0
+        
+        for _ in range(num_repeticoes):
+            lista_copia = lista.copy()
+            inicio = time.perf_counter()
+            resultado_mergesort, comp, troc = mergeSort(lista_copia)
+            tempo = time.perf_counter() - inicio
+            tempos_mergesort.append(tempo)
+            comparacoes_mergesort = comp
+            trocas_mergesort = troc
+        
+        tempo_medio = sum(tempos_mergesort) / num_repeticoes
+        resultados['mergesort'] = {
+            'resultado': resultado_mergesort,
+            'tempo_medio': tempo_medio,
+            'tempos': tempos_mergesort,
+            'comparacoes': comparacoes_mergesort,
+            'trocas': trocas_mergesort
         }
 
-    else:
-        diferenca = tempo_bubble - tempo_insertion
-        percentual = (diferenca / tempo_bubble) * 100
-        vencedor = "Insertion Sort"
-        mais_rapido = False
-    
-    return {
-        'vencedor': vencedor,
-        'diferenca': diferenca,
-        'percentual': percentual,
-        'bubble_mais_rapido': mais_rapido
-    }
-
-
-
-
-def formatar_resultado(lista, tipo_lista, tamanho, resultados):
-    """
-    Formata os resultados da comparação em texto estruturado.
-    """
-    
-    texto = "=" * 80 + "\n"
-    texto += "ANÁLISE COMPARATIVA DE ALGORITMOS DE ORDENAÇÃO\n"
-    texto += "=" * 80 + "\n\n"
-    
-    texto += f"Tipo de Lista: {tipo_lista.upper()}\n"
-    texto += f"Tamanho: {tamanho} elementos\n"
-    
-    if tamanho <= 20:
-        texto += f"Lista: {lista}\n"
-    else:
-        texto += f"Lista: {lista[:10]}... ({tamanho} elementos)\n"
-    
-    texto += "\n" + "=" * 80 + "\n\n"
-    
-    # Bubble Sort
-    if 'bubble' in resultados:
-        bubble = resultados['bubble']
-        texto += "BUBBLE SORT\n"
-        texto += "-" * 80 + "\n"
+    if executar_heapsort:
+        tempos_heapsort = []
+        comparacoes_heapsort = 0
+        trocas_heapsort = 0
         
-        if tamanho <= 20:
-            texto += f"Resultado: {bubble['resultado']}\n"
-        else:
-            texto += f"Resultado: {bubble['resultado'][:10]}...\n"
+        for _ in range(num_repeticoes):
+            lista_copia = lista.copy()
+            inicio = time.perf_counter()
+            resultado_heapsort, comp, troc = heapSort(lista_copia)
+            tempo = time.perf_counter() - inicio
+            tempos_heapsort.append(tempo)
+            comparacoes_heapsort = comp
+            trocas_heapsort = troc
         
-        texto += f"Tempo de Execução: {bubble['tempo']:.6f} segundos\n"
-        texto += f"Comparações realizadas: {bubble['comparacoes']}\n"
-        texto += "\n"
-    
-    # Insertion Sort
-    if 'insertion' in resultados:
-        insertion = resultados['insertion']
-        texto += "INSERTION SORT\n"
-        texto += "-" * 80 + "\n"
-        
-        if tamanho <= 20:
-            texto += f"Resultado: {insertion['resultado']}\n"
-        else:
-            texto += f"Resultado: {insertion['resultado'][:10]}...\n"
-        
-            texto += f"Tempo de Execução: {insertion['tempo']:.6f} segundos\n"
-            texto += f"Comparações realizadas: {insertion['comparacoes']}\n"
-            texto += "\n"    # Merge Sort
-    if 'mergesort' in resultados:
-        mergesort = resultados['mergesort']
-        texto += "MERGE SORT\n"
-        texto += "-" * 80 + "\n"
-
-        if tamanho <= 20:
-            texto += f"Resultado: {mergesort['resultado']}\n"
-        else:
-            texto += f"Resultado: {mergesort['resultado'][:10]}...\n"
-            texto += f"Tempo de Execução: {mergesort['tempo']:.6f} segundos\n"
-            texto += f"Comparações realizadas: {mergesort['comparacoes']}\n"
-            texto += "\n"
-
-    if 'heapsort' in resultados:
-        heapsort = resultados['heapsort']
-        texto += "HEAP SORT\n"
-        texto += "-" * 80 + "\n"
-
-        if tamanho <= 20:
-            texto += f"Resultado: {heapsort['resultado']}\n"
-        else:
-            texto += f"Resultado: {heapsort['resultado'][:10]}...\n"
-            texto += f"Tempo de Execução: {heapsort['tempo']:.6f} segundos\n"
-            texto += f"Comparações realizadas: {heapsort['comparacoes']}\n"
-            texto += "\n"  
-
-    if 'quicksort' in resultados:
-        quicksort = resultados['quicksort']
-        texto += "HEAP SORT\n"
-        texto += "-" * 80 + "\n"
-
-        if tamanho <= 20:
-            texto += f"Resultado: {quicksort['resultado']}\n"
-        else:
-            texto += f"Resultado: {quicksort['resultado'][:10]}...\n"
-            texto += f"Tempo de Execução: {quicksort['tempo']:.6f} segundos\n"
-            texto += f"Comparações realizadas: {quicksort['comparacoes']}\n"
-            texto += "\n"                      
-    
-    # Comparação (2 ou 3 algoritmos)
-    tempos_disponiveis = {
-        'bubble': resultados.get('bubble', {}).get('tempo'),
-        'insertion': resultados.get('insertion', {}).get('tempo'),
-        'mergesort': resultados.get('mergesort', {}).get('tempo'),
-        'heapsort': resultados.get('heapsort', {}).get('tempo'),
-        'quicksort': resultados.get('quicksort', {}).get('tempo')
-    }
-    
-    # Filtrar apenas os algoritmos que foram executados
-    tempos_filtrados = {k: v for k, v in tempos_disponiveis.items() if v is not None}
-
-      # Se há 2 ou mais algoritmos, fazer comparação
-    if len(tempos_filtrados) >= 2:
-        texto += "=" * 80 + "\n"
-        texto += "AVALIAÇÃO DE DESEMPENHO DOS ALGORITMOS\n"
-        texto += "=" * 80 + "\n"
-        
-        # Encontrar o mais rápido
-        algoritmo_mais_rapido = min(tempos_filtrados, key=tempos_filtrados.get)
-        melhor_tempo = tempos_filtrados[algoritmo_mais_rapido]
-        
-        nm_algoritmo = {
-            'bubble': 'Bubble Sort',
-            'insertion': 'Insertion Sort',
-            'mergesort': 'Merge Sort',
-            'heapsort': 'Heap Sort',
-            'quicksort': 'Quick Sort'
+        tempo_medio = sum(tempos_heapsort) / num_repeticoes
+        resultados['heapsort'] = {
+            'resultado': resultado_heapsort,
+            'tempo_medio': tempo_medio,
+            'tempos': tempos_heapsort,
+            'comparacoes': comparacoes_heapsort,
+            'trocas': trocas_heapsort
         }
 
-        texto += f"O {nm_algoritmo[algoritmo_mais_rapido]} foi o algoritmo mais eficiente!\n"
-        texto += f"Com um tempo de execução igual a: {melhor_tempo:.6f} segundos\n\n"
+    if executar_quicksort:
+        tempos_quicksort = []
+        comparacoes_quicksort = 0
+        trocas_quicksort = 0
         
-        # Comparar com os outros
-        for algoritmo, tempo in tempos_filtrados.items():# Comparar cada algoritmo com o mais rápido
-            if algoritmo != algoritmo_mais_rapido:
-                diferenca = tempo - melhor_tempo
-                percentual = (diferenca / melhor_tempo) * 100
-                texto += f"{nm_algoritmo[algoritmo]}: {percentual:.2f}% mais lento ({tempo:.6f}s)\n"
-
-        texto += "\n" + "=" * 80 + "\n"
+        for _ in range(num_repeticoes):
+            lista_copia = lista.copy()
+            inicio = time.perf_counter()
+            resultado_quicksort, comp, troc = quick_sort(lista_copia)
+            tempo = time.perf_counter() - inicio
+            tempos_quicksort.append(tempo)
+            comparacoes_quicksort = comp
+            trocas_quicksort = troc
+        
+        tempo_medio = sum(tempos_quicksort) / num_repeticoes
+        resultados['quicksort'] = {
+            'resultado': resultado_quicksort,
+            'tempo_medio': tempo_medio,
+            'tempos': tempos_quicksort,
+            'comparacoes': comparacoes_quicksort,
+            'trocas': trocas_quicksort
+        }           
     
-    return texto
-
-
-
-
+    return resultados
 
