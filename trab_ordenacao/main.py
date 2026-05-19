@@ -13,7 +13,7 @@ from ui import (
 
 
 class App:
-    ENTRADAS = [10000, 30000] # listas com as entradas para teste
+    ENTRADAS = [100000] # listas com as entradas para teste
     TIPOS_ORDENACAO = ["crescente", "decrescente", "aleatoria"]
     NOMES_ALGORITMOS = {
         "bubble": "Bubble Sort",
