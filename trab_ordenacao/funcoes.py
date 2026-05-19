@@ -149,60 +149,57 @@ def quick_sort(vetor):
     return vetor, comparacoes[0], trocas[0]
 
 
-def algoritmo_hibrido(lista):  # Quick Sort + Insertion Sort - AGORA RECEBE A LISTA
+def algoritmo_hibrido(lista): 
     comparacoes = [0]
     trocas = [0]
-    limite_troca = 32
+    limite_troca = 32  
     arr = lista  
     
     def insertion_sort_parcial(a, esq, dir):
-        # Ordena a sublista de a[esq] a a[dir] usando Insertion Sort
-        for j in range(esq + 1, dir + 1):
+        # Ordena a sublista usando Insertion Sort
+        for j in range(esq + 1, dir + 1):            
             chave = a[j]
             i = j - 1
             while i >= esq:
                 comparacoes[0] += 1
-                if a[i] > chave:
-                    a[i + 1] = a[i]
-                    trocas[0] += 1  # conta a troca de elementos 
+                if a[i] > chave:  # Se o elemento é maior que a chave
+                    a[i + 1] = a[i]  # Move-o para a direita
+                    trocas[0] += 1
                     i -= 1
                 else:
                     break
-            a[i + 1] = chave
+            a[i + 1] = chave  # Ajusta a posição da chave
 
     def quick_sort_hibrido(esq, dir):
-        # Se o tamanho da sublista for menor ou igual ao limite, usa o Insertion Sort
-        if esq >= dir:
-            return
-        elif dir - esq + 1 <= limite_troca:
+        # Se o tamanho da sublista é pequeno, usa Insertion Sort
+        if dir - esq <= limite_troca:           
             insertion_sort_parcial(arr, esq, dir)
-        else:
-            # Escolher pivô aleatório
-            pivot_index = random.randint(esq, dir)
-            arr[pivot_index], arr[dir] = arr[dir], arr[pivot_index]
-            trocas[0] += 1  # conta a troca de elementos
+        elif esq < dir:
+            # Particiona a lista
+            pivot = random.randint(esq, dir)  # Escolhe um pivô aleatório
+            arr[pivot], arr[dir] = arr[dir], arr[pivot]
+            trocas[0] += 1
 
-            pivot = arr[dir]
+            pivo = arr[dir]
             i = esq - 1
             for j in range(esq, dir):
                 comparacoes[0] += 1
-                if arr[j] <= pivot:
+                if arr[j] <= pivo:
                     i += 1
-                    if i != j:
-                        arr[i], arr[j] = arr[j], arr[i]
-                        trocas[0] += 1  # conta a troca de elementos
+                    arr[i], arr[j] = arr[j], arr[i]
+                    trocas[0] += 1
+            
+            # Coloca o pivô na posição correta
             arr[i + 1], arr[dir] = arr[dir], arr[i + 1]
-            trocas[0] += 1  # conta a troca de elementos
+            trocas[0] += 1
             p = i + 1
+            
+            # Chamadas recursivas das sublistas
             quick_sort_hibrido(esq, p - 1)
             quick_sort_hibrido(p + 1, dir)
-
-    quick_sort_hibrido(0, len(arr) - 1)
-    
-    return arr, comparacoes[0], trocas[0]  # Retorna também a lista ordenada e trocas
-
-
-
+        
+    quick_sort_hibrido(0, len(arr) - 1)  
+    return arr, comparacoes[0], trocas[0]
 
 
 def lista_crescente(tamanho):
