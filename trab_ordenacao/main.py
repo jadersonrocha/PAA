@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import matplotlib.pyplot as plt
-from funcoes import gerar_lista, executar_comparacao
+#from funcoes import gerar_lista, executar_comparacao
+from funcoes import gerar_lista, avaliacao_comparacao, algoritmo_hibrido
 from ui import (
     configurar_estilos,
     criar_interface_principal,
@@ -13,20 +13,20 @@ from ui import (
 
 
 class App:
-    ENTRADAS = [100, 1000, 5000] # listas com as entradas para teste
+    ENTRADAS = [10000, 30000] # listas com as entradas para teste
     TIPOS_ORDENACAO = ["crescente", "decrescente", "aleatoria"]
     NOMES_ALGORITMOS = {
         "bubble": "Bubble Sort",
         "insertion": "Insertion Sort",
         "mergesort": "Merge Sort",
         "heapsort": "Heap Sort",
-         "quicksort": "Quick Sort",
+        "quicksort": "Quick Sort",
+        "algoritmo_hibrido": "Algoritmo Híbrido",
     }
 
     def __init__(self, root): # Inicializar a aplicação
         self.root = root
         self.cor_primaria = "#2c3e50"
-        self.janela_grafico = None
         
         # Configurar janela
         self.root.title("Comparador de Algoritmos de Ordenacao")
@@ -91,6 +91,7 @@ class App:
             "mergesort": self.algo_frame.merge_var.get(),
             "heapsort": self.algo_frame.heapsort_var.get(),
             "quicksort": self.algo_frame.quicksort_var.get(),
+            "algoritmo_hibrido": self.algo_frame.aoh_var.get(),
         }
     
     # Avaliação comparativa dos algoritmos selecionados
@@ -112,7 +113,6 @@ class App:
             resultado_por_tamanho = {
                 "tamanho": tamanho,
                 "tipos": {},
-                "medias": {},
             }
 
             self.resultado_frame.inserir(f"Processando entrada {tamanho}...\n") 
@@ -124,27 +124,16 @@ class App:
                     messagebox.showerror("Erro", erro)
                     return
 
-                resultados = executar_comparacao(
+                resultados = avaliacao_comparacao(
                     lista,
                     executar_bubble=algoritmos["bubble"],
                     executar_insertion=algoritmos["insertion"],
                     executar_mergesort=algoritmos["mergesort"],
                     executar_heapsort=algoritmos["heapsort"],
-                    executar_quicksort=algoritmos["quicksort"]
+                    executar_quicksort=algoritmos["quicksort"],
+                    executar_hibrido=algoritmos["algoritmo_hibrido"],
                 )
                 resultado_por_tamanho["tipos"][tipo_lista] = resultados
-
-            for algoritmo, executar in algoritmos.items():
-                if not executar:
-                    continue
-
-                tempos = [
-                    resultado_por_tamanho["tipos"][tipo][algoritmo]["tempo"]
-                    for tipo in self.TIPOS_ORDENACAO
-                    if algoritmo in resultado_por_tamanho["tipos"][tipo]
-                ]
-                if tempos:
-                    resultado_por_tamanho["medias"][algoritmo] = sum(tempos) / len(tempos)
 
             resultados_automaticos.append(resultado_por_tamanho)
 
@@ -153,37 +142,47 @@ class App:
 
     # Função de apresentação dos resultados
     def formatar_resultados(self, resultados_automaticos, algoritmos):
-        texto = "=" * 100 + "\n"
+        largura = 122
+        texto = "=" * largura + "\n"
         texto += "AVALIAÇÃO DOS ALGORITMOS DE ORDENACAO\n"
-        texto += "=" * 100 + "\n\n"
+        texto += "=" * largura + "\n\n"
         texto += f"Entradas testadas: {', '.join(str(t) for t in self.ENTRADAS)}\n"
         texto += "Tipos de lista: Crescente, Decrescente e Aleatoria\n"
-        texto += "Media: tempo medio de execução das três listas de ordenação.\n\n"
+        texto += "Comp.: numero de comparacoes realizadas. Trocas: numero de trocas ou movimentacoes realizadas.\n\n"
 
         for resultado_tamanho in resultados_automaticos:
             tamanho = resultado_tamanho["tamanho"]
-            texto += "=" * 100 + "\n"
-            texto += f"ENTRADA: {tamanho} ELEMENTOS\n"
-            texto += "=" * 100 + "\n"
-            texto += f"{'Algoritmo':<18}{'Crescente(s)':>16}{'Decrescente(s)':>18}{'Aleatoria(s)':>18}{'Media(s)':>14}\n"
-            texto += "-" * 100 + "\n"
+            texto += "=" * largura + "\n"
+            texto += f"VETOR [{tamanho}]\n"
+            texto += "=" * largura + "\n"
+            texto += (
+                f"{'Lista':<16}"
+                f"{'Ordem Crescente':^35}"
+                f"{'Ordem Decrescente':^35}"
+                f"{'Ordem Aleatoria':^35}\n"
+            )
+            texto += (
+                f"{'Algoritmo':<16}"
+                f"{'Tempo(s)':>12}{'Comp.':>11}{'Trocas':>12}"
+                f"{'Tempo(s)':>12}{'Comp.':>11}{'Trocas':>12}"
+                f"{'Tempo(s)':>12}{'Comp.':>11}{'Trocas':>12}\n"
+            )
+            texto += "-" * largura + "\n"
 
             for algoritmo, executar in algoritmos.items():
                 if not executar:
                     continue
 
-                tempos = {}
+                metricas = {}
                 for tipo in self.TIPOS_ORDENACAO:
                     resultado_algoritmo = resultado_tamanho["tipos"][tipo].get(algoritmo)
-                    tempos[tipo] = resultado_algoritmo["tempo"] if resultado_algoritmo else None
+                    metricas[tipo] = resultado_algoritmo
 
-                media = resultado_tamanho["medias"].get(algoritmo)
                 texto += (
-                    f"{self.NOMES_ALGORITMOS[algoritmo]:<18}"
-                    f"{self.formatar_tempo(tempos['crescente']):>16}"
-                    f"{self.formatar_tempo(tempos['decrescente']):>18}"
-                    f"{self.formatar_tempo(tempos['aleatoria']):>16}"
-                    f"{self.formatar_tempo(media):>14}\n"
+                    f"{self.NOMES_ALGORITMOS[algoritmo]:<16}"
+                    f"{self.formatar_metricas(metricas['crescente'])}"
+                    f"{self.formatar_metricas(metricas['decrescente'])}"
+                    f"{self.formatar_metricas(metricas['aleatoria'])}\n"
                 )
 
             texto += "\n"
@@ -195,19 +194,27 @@ class App:
         if tempo is None:
             return "-"
         return f"{tempo:.6f}"
+
+    @classmethod
+    def formatar_metricas(cls, resultado):
+        if resultado is None:
+            return f"{'-':>12}{'-':>11}{'-':>12}"
+
+        return (
+            f"{cls.formatar_tempo(resultado['tempo_medio']):>12}"
+            f"{cls.formatar_numero(resultado['comparacoes']):>11}"
+            f"{cls.formatar_numero(resultado['trocas']):>12}"
+        )
+
+    @staticmethod
+    def formatar_numero(numero):
+        return str(numero)
     
     def limpar_resultados(self):
         self.resultado_frame.limpar()
         self.config_frame.limpar_entrada_custom()
     
     def sair_aplicacao(self):
-        if self.janela_grafico is not None:
-            try:
-                self.janela_grafico.fechar()
-            except tk.TclError:
-                pass
-            self.janela_grafico = None
-
         for janela in self.root.winfo_children():
             if isinstance(janela, tk.Toplevel):
                 try:
@@ -215,14 +222,13 @@ class App:
                 except tk.TclError:
                     pass
 
-        plt.close("all")
         self.root.quit()
         self.root.destroy()
 
 
 def inicializar():
     root = tk.Tk()# Criar a janela principal
-    app = App(root) # Inicializar a aplicação
+    App(root) # Inicializar a aplicação
     root.mainloop() # Iniciar o loop principal da interface
 
 
