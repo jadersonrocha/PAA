@@ -149,6 +149,62 @@ def quick_sort(vetor):
     return vetor, comparacoes[0], trocas[0]
 
 
+def algoritmo_hibrido(lista):  # Quick Sort + Insertion Sort - AGORA RECEBE A LISTA
+    comparacoes = [0]
+    trocas = [0]
+    limite_troca = 32
+    arr = lista  
+    
+    def insertion_sort_parcial(a, esq, dir):
+        # Ordena a sublista de a[esq] a a[dir] usando Insertion Sort
+        for j in range(esq + 1, dir + 1):
+            chave = a[j]
+            i = j - 1
+            while i >= esq:
+                comparacoes[0] += 1
+                if a[i] > chave:
+                    a[i + 1] = a[i]
+                    trocas[0] += 1  # conta a troca de elementos 
+                    i -= 1
+                else:
+                    break
+            a[i + 1] = chave
+
+    def quick_sort_hibrido(esq, dir):
+        # Se o tamanho da sublista for menor ou igual ao limite, usa o Insertion Sort
+        if esq >= dir:
+            return
+        elif dir - esq + 1 <= limite_troca:
+            insertion_sort_parcial(arr, esq, dir)
+        else:
+            # Escolher pivô aleatório
+            pivot_index = random.randint(esq, dir)
+            arr[pivot_index], arr[dir] = arr[dir], arr[pivot_index]
+            trocas[0] += 1  # conta a troca de elementos
+
+            pivot = arr[dir]
+            i = esq - 1
+            for j in range(esq, dir):
+                comparacoes[0] += 1
+                if arr[j] <= pivot:
+                    i += 1
+                    if i != j:
+                        arr[i], arr[j] = arr[j], arr[i]
+                        trocas[0] += 1  # conta a troca de elementos
+            arr[i + 1], arr[dir] = arr[dir], arr[i + 1]
+            trocas[0] += 1  # conta a troca de elementos
+            p = i + 1
+            quick_sort_hibrido(esq, p - 1)
+            quick_sort_hibrido(p + 1, dir)
+
+    quick_sort_hibrido(0, len(arr) - 1)
+    
+    return arr, comparacoes[0], trocas[0]  # Retorna também a lista ordenada e trocas
+
+
+
+
+
 def lista_crescente(tamanho):
     return list(range(1, tamanho + 1))
 
@@ -273,9 +329,9 @@ def executar_comparacao(lista, executar_bubble=True, executar_insertion=True, ex
 
 
 
-def avaliacao_comparacao(lista, num_repeticoes=3, executar_bubble=True, executar_insertion=True, executar_mergesort=True, executar_heapsort=True, executar_quicksort=True):
+def avaliacao_comparacao(lista, num_repeticoes=3, executar_bubble=True, executar_insertion=True, executar_mergesort=True, executar_heapsort=True, executar_quicksort=True, executar_hibrido=True):
     
-    # Executa a comparação entre algoritmos de ordenação 3 vezes e calcula a média. 
+    # Executa os algoritmos de ordenação 3 vezes e calcula a média. 
     # Retorna um dicionário com os resultados de cada algoritmo, incluindo o resultado ordenado, 
     # tempo médio, tempos individuais, número de comparações e trocas.     
     
@@ -369,8 +425,7 @@ def avaliacao_comparacao(lista, num_repeticoes=3, executar_bubble=True, executar
             'resultado': resultado_heapsort,
             'tempo_medio': tempo_medio,
             'tempos': tempos_heapsort,
-            'comparacoes': comparacoes_heapsort,
-            'trocas': trocas_heapsort
+            'comparacoes': comparacoes_heapsort,            'trocas': trocas_heapsort
         }
 
     if executar_quicksort:
@@ -394,7 +449,30 @@ def avaliacao_comparacao(lista, num_repeticoes=3, executar_bubble=True, executar
             'tempos': tempos_quicksort,
             'comparacoes': comparacoes_quicksort,
             'trocas': trocas_quicksort
-        }           
+        }
+
+    if executar_hibrido:
+        tempos_hibrido = []
+        comparacoes_hibrido = 0
+        trocas_hibrido = 0
+        
+        for _ in range(num_repeticoes):
+            lista_copia = lista.copy()
+            inicio = time.perf_counter()
+            resultado_hibrido, comp, troc = algoritmo_hibrido(lista_copia)
+            tempo = time.perf_counter() - inicio
+            tempos_hibrido.append(tempo)
+            comparacoes_hibrido = comp
+            trocas_hibrido = troc
+        
+        tempo_medio = sum(tempos_hibrido) / num_repeticoes
+        resultados['algoritmo_hibrido'] = {
+            'resultado': resultado_hibrido,
+            'tempo_medio': tempo_medio,
+            'tempos': tempos_hibrido,
+            'comparacoes': comparacoes_hibrido,
+            'trocas': trocas_hibrido
+        }
     
     return resultados
 
