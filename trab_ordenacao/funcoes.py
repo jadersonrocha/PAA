@@ -149,58 +149,84 @@ def quick_sort(vetor):
     return vetor, comparacoes[0], trocas[0]
 
 
-def algoritmo_hibrido(lista): 
+def algoritmo_hibrido(lista):  # Quick Sort + Insertion Sort - AGORA RECEBE A LISTA
     comparacoes = [0]
     trocas = [0]
-    limite_troca = 32  
+    limite_troca = 32
     arr = lista  
     
     def insertion_sort_parcial(a, esq, dir):
-        # Ordena a sublista usando Insertion Sort
-        for j in range(esq + 1, dir + 1):            
+        # Ordena a sublista de a[esq] a a[dir] usando Insertion Sort
+        for j in range(esq + 1, dir + 1):
             chave = a[j]
             i = j - 1
             while i >= esq:
                 comparacoes[0] += 1
-                if a[i] > chave:  # Se o elemento é maior que a chave
-                    a[i + 1] = a[i]  # Move-o para a direita
-                    trocas[0] += 1
+                if a[i] > chave: # Se o elemento é maior que a chave, move-o para a direita
+                    a[i + 1] = a[i] 
+                    trocas[0] += 1  # troca de elementos
                     i -= 1
                 else:
                     break
-            a[i + 1] = chave  # Ajusta a posição da chave
+            a[i + 1] = chave # Ajusta a posição da chave
 
-    def quick_sort_hibrido(esq, dir):
-        # Se o tamanho da sublista é pequeno, usa Insertion Sort
-        if dir - esq <= limite_troca:           
-            insertion_sort_parcial(arr, esq, dir)
-        elif esq < dir:
-            # Particiona a lista
-            pivot = random.randint(esq, dir)  # Escolhe um pivô aleatório
-            arr[pivot], arr[dir] = arr[dir], arr[pivot]
-            trocas[0] += 1
+    def particionar(esq, dir):
+        
+        # Escolhe pivô aleatório
+        pivot = random.randint(esq, dir) # escolhe um pivo qualquer 
+        arr[pivot], arr[dir] = arr[dir], arr[pivot]  # Coloca o pivô no final
+        trocas[0] += 1 
 
-            pivo = arr[dir]
-            i = esq - 1
-            for j in range(esq, dir):
-                comparacoes[0] += 1
-                if arr[j] <= pivo:
-                    i += 1
+        pivot = arr[dir]  # pivô é o último elemento
+        i = esq - 1 
+        
+        for j in range(esq, dir): # Percorre a sublista
+            comparacoes[0] += 1
+            if arr[j] <= pivot: # Se o elemento é <= ao pivô, move-o para a esquerda
+                i += 1
+                if i != j: # verificar se a troca é necessaria 
                     arr[i], arr[j] = arr[j], arr[i]
                     trocas[0] += 1
-            
-            # Coloca o pivô na posição correta
-            arr[i + 1], arr[dir] = arr[dir], arr[i + 1]
-            trocas[0] += 1
-            p = i + 1
-            
-            # Chamadas recursivas das sublistas
-            quick_sort_hibrido(esq, p - 1)
-            quick_sort_hibrido(p + 1, dir)
         
-    quick_sort_hibrido(0, len(arr) - 1)  
-    return arr, comparacoes[0], trocas[0]
+        # Coloca pivô na posição correta
+        arr[i + 1], arr[dir] = arr[dir], arr[i + 1]
+        trocas[0] += 1
+        return i + 1
 
+    def quick_sort_hibrido(esq, dir):
+        # Usa pilha ao invés de recursão para evitar estouro de stack
+        pilha = [(esq, dir)]
+        
+        while pilha:
+            esq, dir = pilha.pop()
+            
+            # Se o tamanho for pequeno, usa Insertion Sort
+            if dir - esq <= limite_troca:
+                if esq < dir:
+                    insertion_sort_parcial(arr, esq, dir)
+                continue
+            
+            # Se a sublista é válida
+            if esq < dir:
+                # Particiona
+                p = particionar(esq, dir)
+                
+                # Empilha as duas sublistas (menor primeiro para economizar memória)
+                if p - esq < dir - p:
+                    if esq < p:
+                        pilha.append((esq, p - 1))
+                    if p < dir:
+                        pilha.append((p + 1, dir))
+                else:
+                    if p < dir:
+                        pilha.append((p + 1, dir))
+                    if esq < p:
+                        pilha.append((esq, p - 1))
+
+    if len(arr) > 1:
+        quick_sort_hibrido(0, len(arr) - 1)
+
+    return arr, comparacoes[0], trocas[0]  # Retorna a lista ordenada, as comparações e trocas
 
 def lista_crescente(tamanho):
     return list(range(1, tamanho + 1))
