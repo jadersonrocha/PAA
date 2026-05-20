@@ -117,6 +117,7 @@ def quick_sort(vetor):
     comparacoes = [0]
     trocas = [0]
 
+    #Função que realiza a troca de dois elementos no vetor e incrementa o contador de trocas
     def trocar(i, j):
         if i != j:
             vetor[i], vetor[j] = vetor[j], vetor[i]
@@ -134,14 +135,16 @@ def quick_sort(vetor):
             comparacoes[0] += 1
             if vetor[j] <= pivo:
                 i += 1
-                trocar(i, j)
+                trocar(i, j) # troca os elementos nas posições i e j
 
-        trocar(i + 1, fim)
+        trocar(i + 1, fim) 
         return i + 1
 
+    # função que realiza a ordenação recursiva do algoritmo
     def quicksort_rec(inicio, fim):
-        if inicio < fim:
-            posicao_pivo = particionar(inicio, fim)
+        if inicio < fim: # verifica se o início é menor que o fim para continuar a ordenação
+            
+            posicao_pivo = particionar(inicio, fim)#chama a função de partição
             quicksort_rec(inicio, posicao_pivo - 1)
             quicksort_rec(posicao_pivo + 1, fim)
 
