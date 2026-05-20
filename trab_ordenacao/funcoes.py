@@ -195,6 +195,89 @@ def algoritmo_hibrido(lista):
     quick_sort_hibrido(0, len(arr) - 1)
     return arr, comparacoes[0], trocas[0]
 
+
+def algoritmo_hibrido_insercao(lista):
+    """ Algoritmo híbrido que combina Quick Sort com Insertion Sort para sublistas pequenas. """
+    comparacoes = [0]
+    trocas = [0]
+    limite_troca = 32
+    arr = lista  
+    
+    def insertion_sort_parcial(a, esq, dir):
+        """Insertion Sort para sublistas pequenas """
+        for j in range(esq + 1, dir + 1):
+            chave = a[j]
+            i = j - 1
+            while i >= esq:
+                comparacoes[0] += 1
+                if a[i] > chave:
+                    a[i + 1] = a[i] 
+                    trocas[0] += 1
+                    i -= 1
+                else:
+                    break
+            a[i + 1] = chave
+
+    def partition_hoare(esq, dir):
+        """Partição usando o método de Hoare      
+        """
+        # Selecionar pivô aleatório
+        pivot_index = random.randint(esq, dir)
+        arr[pivot_index], arr[esq] = arr[esq], arr[pivot_index]
+        
+        pivot = arr[esq]
+        i = esq - 1
+        j = dir + 1
+        
+        while True:
+            # Encontrar elemento >= pivot da direita para esquerda
+            j -= 1
+            while j >= esq:
+                comparacoes[0] += 1
+                if arr[j] <= pivot:
+                    break
+                j -= 1
+            
+            # Encontrar elemento <= pivot da esquerda para direita
+            i += 1
+            while i <= dir:
+                comparacoes[0] += 1
+                if arr[i] >= pivot:
+                    break
+                i += 1
+            
+            # Se os índices se cruzaram, sair
+            if i < j:
+                # Trocar elementos
+                arr[i], arr[j] = arr[j], arr[i]
+                trocas[0] += 1
+            else:
+                return j + 1
+
+    def quick_sort_hibrido(esq, dir):
+        """algoritmo HOARE """
+        while esq < dir:
+            #  troca para InsertionSort quando sublista <= 32 elementos
+            if dir - esq + 1 <= limite_troca: 
+                insertion_sort_parcial(arr, esq, dir)
+                break
+            else:
+                # retorna posição de partição
+                p = partition_hoare(esq, dir)
+                
+                # Recursivamente ordenar a parte menor primeiro                
+                if p - esq < dir - p:
+                    quick_sort_hibrido(esq, p - 1) # Ordena a parte menor primeiro
+                    esq = p  
+                else:
+                    quick_sort_hibrido(p, dir) # Ordena a parte menor primeiro
+                    dir = p - 1 
+
+    quick_sort_hibrido(0, len(arr) - 1)
+    return arr, comparacoes[0], trocas[0]
+
+
+
 def lista_crescente(tamanho):
     return list(range(1, tamanho + 1))
 
@@ -223,7 +306,7 @@ def gerar_lista(tipo_lista, tamanho=None, entrada_custom=None):
     
     # Validar tamanho
     if tamanho is None:
-        return None, "Tamanho não especificado!"
+        return None, "Tamanho não especificado!" 
     
     try:
         tamanho = int(tamanho)
@@ -242,11 +325,7 @@ def gerar_lista(tipo_lista, tamanho=None, entrada_custom=None):
 
 
 def executar_comparacao(lista, executar_bubble=True, executar_insertion=True, executar_mergesort=True, executar_heapsort=True, executar_quicksort=True):
-    """
-    Executa a comparação entre algoritmos de ordenação. 
-    
-    """
-   
+    """Executa a comparação entre algoritmos de ordenação.  """  
     
     resultados = {}
     
@@ -319,150 +398,81 @@ def executar_comparacao(lista, executar_bubble=True, executar_insertion=True, ex
 
 
 
-def avaliacao_comparacao(lista, num_repeticoes=3, executar_bubble=True, executar_insertion=True, executar_mergesort=True, executar_heapsort=True, executar_quicksort=True, executar_hibrido=True):
+def avaliacao_comparacao(tamanho, num_repeticoes=3, executar_bubble=True, executar_insertion=True, executar_mergesort=True, executar_heapsort=True, executar_quicksort=True, executar_hibrido=True, executar_hibrido_insercao=True):
     
-    # Executa os algoritmos de ordenação 3 vezes e calcula a média. 
-    # Retorna um dicionário com os resultados de cada algoritmo, incluindo o resultado ordenado, 
-    # tempo médio, tempos individuais, número de comparações e trocas.     
+    # Executa os algoritmos de ordenação 3 vezes para CADA tipo de lista     
     
+    tipos_lista = ['crescente', 'decrescente', 'aleatoria']
     resultados = {}
+      # Gerar listas para cada tipo
+    listas = {}
+    for tipo in tipos_lista:
+        listas[tipo], _ = gerar_lista(tipo, tamanho)
     
-    if executar_bubble:
-        tempos_bubble = []
-        comparacoes_bubble = 0
-        trocas_bubble = 0
+    def algoritmo(algoritmo_func, nome_algoritmo):
+        """Executa cada algoritmo selecionado 3 vezes para cada tipo de lista"""
+        resultados_algo = {}
+        tempos_totais = []
+        comparacoes_totais = []
+        trocas_totais = []
+        resultado_final = None
         
-        for _ in range(num_repeticoes): # Executa o algoritmo varias vezes (3x) para efetuar a media
-            lista_copia = lista.copy()
-            inicio = time.perf_counter()
-            resultado_bubble, comp, troc = bubbleSort(lista_copia) # Retorna o resultado da ordenação
-            tempo = time.perf_counter() - inicio # calcula o tempo de ordenação da lista
-            tempos_bubble.append(tempo) # Recebe o tempo de cada ordenação, para calculo da média.
-            comparacoes_bubble = comp  # São iguais em todas as repetições
-            trocas_bubble = troc
+        for tipo in tipos_lista:
+            tempos_tipo = []
+            comparacoes_tipo_lista = []
+            trocas_tipo_lista = []
+            
+            for _ in range(num_repeticoes):
+                lista_copia = listas[tipo].copy()
+                inicio = time.perf_counter()
+                resultado, comp, troc = algoritmo_func(lista_copia)
+                tempo = time.perf_counter() - inicio
+                
+                tempos_tipo.append(tempo)
+                tempos_totais.append(tempo)
+                comparacoes_tipo_lista.append(comp)
+                trocas_tipo_lista.append(troc)
+                comparacoes_totais.append(comp)
+                trocas_totais.append(troc)
+                resultado_final = resultado
+            
+            # Médias por tipo de lista
+            resultados_algo[tipo] = {
+                'tempo_medio': sum(tempos_tipo) / len(tempos_tipo),
+                'tempos': tempos_tipo,
+                'comparacoes': sum(comparacoes_tipo_lista) / len(comparacoes_tipo_lista),
+                'trocas': sum(trocas_tipo_lista) / len(trocas_tipo_lista)
+            }
         
-        tempo_medio = sum(tempos_bubble) / num_repeticoes # calcula o tempo médio de ordenacao
-        resultados['bubble'] = {
-            'resultado': resultado_bubble,
-            'tempo_medio': tempo_medio,
-            'tempos': tempos_bubble,
-            'comparacoes': comparacoes_bubble,
-            'trocas': trocas_bubble
+        # Resultados
+        return {
+            'tempo_medio_geral': sum(tempos_totais) / len(tempos_totais),
+            'resultado': resultado_final,
+            'por_tipo': resultados_algo,
+            'comparacoes_media': sum(comparacoes_totais) / len(comparacoes_totais),
+            'trocas_media': sum(trocas_totais) / len(trocas_totais)
         }
+      # Executar cada algoritmo
+    if executar_bubble:
+        resultados['bubble'] = algoritmo(bubbleSort, 'Bubble Sort')
     
     if executar_insertion:
-        tempos_insertion = []
-        comparacoes_insertion = 0
-        trocas_insertion = 0
-        
-        for _ in range(num_repeticoes):
-            lista_copia = lista.copy()
-            inicio = time.perf_counter()
-            resultado_insertion, comp, troc = insertionSort(lista_copia)
-            tempo = time.perf_counter() - inicio
-            tempos_insertion.append(tempo)
-            comparacoes_insertion = comp
-            trocas_insertion = troc
-        
-        tempo_medio = sum(tempos_insertion) / num_repeticoes
-        resultados['insertion'] = {
-            'resultado': resultado_insertion,
-            'tempo_medio': tempo_medio,
-            'tempos': tempos_insertion,
-            'comparacoes': comparacoes_insertion,
-            'trocas': trocas_insertion
-        }
+        resultados['insertion'] = algoritmo(insertionSort, 'Insertion Sort')
     
     if executar_mergesort:
-        tempos_mergesort = []
-        comparacoes_mergesort = 0
-        trocas_mergesort = 0
-        
-        for _ in range(num_repeticoes):
-            lista_copia = lista.copy()
-            inicio = time.perf_counter()
-            resultado_mergesort, comp, troc = mergeSort(lista_copia)
-            tempo = time.perf_counter() - inicio
-            tempos_mergesort.append(tempo)
-            comparacoes_mergesort = comp
-            trocas_mergesort = troc
-        
-        tempo_medio = sum(tempos_mergesort) / num_repeticoes
-        resultados['mergesort'] = {
-            'resultado': resultado_mergesort,
-            'tempo_medio': tempo_medio,
-            'tempos': tempos_mergesort,
-            'comparacoes': comparacoes_mergesort,
-            'trocas': trocas_mergesort
-        }
+        resultados['mergesort'] = algoritmo(mergeSort, 'Merge Sort')
 
     if executar_heapsort:
-        tempos_heapsort = []
-        comparacoes_heapsort = 0
-        trocas_heapsort = 0
-        
-        for _ in range(num_repeticoes):
-            lista_copia = lista.copy()
-            inicio = time.perf_counter()
-            resultado_heapsort, comp, troc = heapSort(lista_copia)
-            tempo = time.perf_counter() - inicio
-            tempos_heapsort.append(tempo)
-            comparacoes_heapsort = comp
-            trocas_heapsort = troc
-        
-        tempo_medio = sum(tempos_heapsort) / num_repeticoes
-        resultados['heapsort'] = {
-            'resultado': resultado_heapsort,
-            'tempo_medio': tempo_medio,
-            'tempos': tempos_heapsort,
-            'comparacoes': comparacoes_heapsort,            'trocas': trocas_heapsort
-        }
+        resultados['heapsort'] = algoritmo(heapSort, 'Heap Sort')
 
     if executar_quicksort:
-        tempos_quicksort = []
-        comparacoes_quicksort = 0
-        trocas_quicksort = 0
-        
-        for _ in range(num_repeticoes):
-            lista_copia = lista.copy()
-            inicio = time.perf_counter()
-            resultado_quicksort, comp, troc = quick_sort(lista_copia)
-            tempo = time.perf_counter() - inicio
-            tempos_quicksort.append(tempo)
-            comparacoes_quicksort = comp
-            trocas_quicksort = troc
-        
-        tempo_medio = sum(tempos_quicksort) / num_repeticoes
-        resultados['quicksort'] = {
-            'resultado': resultado_quicksort,
-            'tempo_medio': tempo_medio,
-            'tempos': tempos_quicksort,
-            'comparacoes': comparacoes_quicksort,
-            'trocas': trocas_quicksort
-        }
+        resultados['quicksort'] = algoritmo(quick_sort, 'Quick Sort')
 
     if executar_hibrido:
-        tempos_hibrido = []
-        comparacoes_hibrido = 0
-        trocas_hibrido = 0
-        
-        for _ in range(num_repeticoes):
-            lista_copia = lista.copy()
-            inicio = time.perf_counter()
-            resultado_hibrido, comp, troc = algoritmo_hibrido(lista_copia)
-            tempo = time.perf_counter() - inicio
-            tempos_hibrido.append(tempo)
-            comparacoes_hibrido = comp
-            trocas_hibrido = troc
-        
-        tempo_medio = sum(tempos_hibrido) / num_repeticoes
-        resultados['algoritmo_hibrido'] = {
-            'resultado': resultado_hibrido,
-            'tempo_medio': tempo_medio,
-            'tempos': tempos_hibrido,
-            'comparacoes': comparacoes_hibrido,
-            'trocas': trocas_hibrido
-        }
+        resultados['algoritmo_hibrido'] = algoritmo(algoritmo_hibrido, 'Híbrido (LOMUTO)')
+
+    if executar_hibrido_insercao:
+        resultados['algoritmo_hibrido_insercao'] = algoritmo(algoritmo_hibrido_insercao, 'Híbrido (HOARE)')
     
     return resultados
 
