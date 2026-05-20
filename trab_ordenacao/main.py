@@ -1,7 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 #from funcoes import gerar_lista, executar_comparacao
+import sys
+sys.setrecursionlimit(1000000)
 from funcoes import gerar_lista, avaliacao_comparacao, algoritmo_hibrido, algoritmo_hibrido_insercao
+from graficos import GeradorGraficos
 from ui import (
     configurar_estilos,
     criar_interface_principal,
@@ -12,8 +15,10 @@ from ui import (
 )
 
 
+
+
 class App:
-    ENTRADAS = [7000] # listas com as entradas para teste
+    ENTRADAS = [1000, 5000, 10000, 30000] # listas com as entradas para teste
     TIPOS_ORDENACAO = ["crescente", "decrescente", "aleatoria"]
     NOMES_ALGORITMOS = {
         "bubble": "Bubble Sort",
@@ -62,6 +67,12 @@ class App:
             botoes_frame,
             text="Executar",
             command=self.avaliacao_comparativa
+        ).pack(side=tk.LEFT, padx=5)
+
+        ttk.Button(
+            botoes_frame,
+            text="Gerar Gráficos",
+            command=self.gerar_graficos
         ).pack(side=tk.LEFT, padx=5)
 
         ttk.Button(
@@ -135,6 +146,10 @@ class App:
             }
 
             resultados_automaticos.append(resultado_por_tamanho)
+        
+        # Armazenar resultados para gerar gráficos depois
+        self.resultados_automaticos = resultados_automaticos
+        self.algoritmos_executados = algoritmos
 
         self.resultado_frame.limpar()
         self.resultado_frame.inserir(self.formatar_resultados(resultados_automaticos, algoritmos))
@@ -207,6 +222,23 @@ class App:
     def limpar_resultados(self):
         self.resultado_frame.limpar()
         self.config_frame.limpar_entrada_custom()
+    
+    def gerar_graficos(self):
+        """Gera os gráficos de análise baseado nos últimos resultados"""
+        if not hasattr(self, 'resultados_automaticos') or not self.resultados_automaticos:
+            messagebox.showwarning("Aviso", "Execute testes primeiro para gerar gráficos!")
+            return
+        
+        try:
+            gerador = GeradorGraficos()
+            janela_graficos = tk.Toplevel(self.root)
+            janela_graficos.title("Gráficos de Análise - Algoritmos de Ordenação")
+            janela_graficos.geometry("1600x900")
+            
+            # Passar a lista completa de resultados (múltiplos tamanhos)
+            gerador.criar_janela_graficos(self.resultados_automaticos, janela_graficos)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao gerar gráficos:\n{str(e)}")
     
     def sair_aplicacao(self):
         for janela in self.root.winfo_children():
