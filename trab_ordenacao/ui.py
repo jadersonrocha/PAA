@@ -67,21 +67,22 @@ class FrameAlgoritmos:
         self.heapsort_var = tk.BooleanVar(value=True)
         self.quicksort_var = tk.BooleanVar(value=True)
         self.aoh_var = tk.BooleanVar(value=True)
+        self.aoh_hoare_var = tk.BooleanVar(value=True)
 
         ttk.Checkbutton(self.frame, text="Bubble Sort", variable=self.bubble_var).pack(anchor=tk.W, padx=5)
         ttk.Checkbutton(self.frame, text="Insertion Sort", variable=self.insertion_var).pack(anchor=tk.W, padx=5)
         ttk.Checkbutton(self.frame, text="Merge Sort", variable=self.merge_var).pack(anchor=tk.W, padx=5)
         ttk.Checkbutton(self.frame, text="Heap Sort", variable=self.heapsort_var).pack(anchor=tk.W, padx=5)
         ttk.Checkbutton(self.frame, text="Quick Sort", variable=self.quicksort_var).pack(anchor=tk.W, padx=5)
-        ttk.Checkbutton(self.frame, text="Algoritmo Híbrido", variable=self.aoh_var).pack(anchor=tk.W, padx=5)
+        ttk.Checkbutton(self.frame, text="Algoritmo Híbrido (LOMUTO)", variable=self.aoh_var).pack(anchor=tk.W, padx=5)
+        ttk.Checkbutton(self.frame, text="Algoritmo Híbrido (HOARE)", variable=self.aoh_hoare_var).pack(anchor=tk.W, padx=5)
 
     def pack(self, **kwargs):
         self.frame.pack(**kwargs)
 
 
 class FrameResultados:
-    """Frame para exibição de resultados"""
-    
+    """Frame para exibição de resultados"""    
     def __init__(self, parent):
         self.frame = ttk.LabelFrame(parent, text="Resultados", padding="10")
         self.criar_widgets()
