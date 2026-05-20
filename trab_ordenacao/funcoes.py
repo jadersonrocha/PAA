@@ -149,20 +149,20 @@ def quick_sort(vetor):
     return vetor, comparacoes[0], trocas[0]
 
 
-def algoritmo_hibrido(lista):  # Quick Sort + Insertion Sort - AGORA RECEBE A LISTA
+def algoritmo_hibrido(lista):  
     comparacoes = [0]
     trocas = [0]
     limite_troca = 32
     arr = lista  
     
     def insertion_sort_parcial(a, esq, dir):
-        # Ordena a sublista de a[esq] a a[dir] usando Insertion Sort
+        # Ordena a sublista de a[] usando Insertion Sort
         for j in range(esq + 1, dir + 1):
             chave = a[j]
             i = j - 1
             while i >= esq:
                 comparacoes[0] += 1
-                if a[i] > chave: # Se o elemento é maior que a chave, move-o para a direita
+                if a[i] > chave: # Se o elemento é maior que a chave, move o elemento para a direita
                     a[i + 1] = a[i] 
                     trocas[0] += 1  # troca de elementos
                     i -= 1
@@ -173,7 +173,7 @@ def algoritmo_hibrido(lista):  # Quick Sort + Insertion Sort - AGORA RECEBE A LI
     def particionar(esq, dir):
         
         # Escolhe pivô aleatório
-        pivot = random.randint(esq, dir) # escolhe um pivo qualquer 
+        pivot = random.randint(esq, dir) 
         arr[pivot], arr[dir] = arr[dir], arr[pivot]  # Coloca o pivô no final
         trocas[0] += 1 
 
@@ -193,10 +193,8 @@ def algoritmo_hibrido(lista):  # Quick Sort + Insertion Sort - AGORA RECEBE A LI
         trocas[0] += 1
         return i + 1
 
-    def quick_sort_hibrido(esq, dir):
-        # Usa pilha ao invés de recursão para evitar estouro de stack
-        pilha = [(esq, dir)]
-        
+    def quick_sort_hibrido(esq, dir):        
+        pilha = [(esq, dir)]        
         while pilha:
             esq, dir = pilha.pop()
             
