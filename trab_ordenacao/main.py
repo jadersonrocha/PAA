@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 #from funcoes import gerar_lista, executar_comparacao
-from funcoes import gerar_lista, avaliacao_comparacao, algoritmo_hibrido
+from funcoes import gerar_lista, avaliacao_comparacao, algoritmo_hibrido, algoritmo_hibrido_insercao
 from ui import (
     configurar_estilos,
     criar_interface_principal,
@@ -13,7 +13,7 @@ from ui import (
 
 
 class App:
-    ENTRADAS = [100000] # listas com as entradas para teste
+    ENTRADAS = [7000] # listas com as entradas para teste
     TIPOS_ORDENACAO = ["crescente", "decrescente", "aleatoria"]
     NOMES_ALGORITMOS = {
         "bubble": "Bubble Sort",
@@ -21,7 +21,8 @@ class App:
         "mergesort": "Merge Sort",
         "heapsort": "Heap Sort",
         "quicksort": "Quick Sort",
-        "algoritmo_hibrido": "Algoritmo Híbrido",
+        "algoritmo_hibrido": "Híbrido (LOMUTO)",
+        "algoritmo_hibrido_insercao": "Híbrido (HOARE)",
     }
 
     def __init__(self, root): # Inicializar a aplicação
@@ -29,7 +30,7 @@ class App:
         self.cor_primaria = "#2c3e50"
         
         # Configurar janela
-        self.root.title("Comparador de Algoritmos de Ordenacao")
+        self.root.title("Avaliação dos Algoritmos de Ordenacao")
         self.root.geometry("900x700")
         self.root.resizable(True, True)
         self.root.configure(bg="#f0f0f0")
@@ -59,7 +60,7 @@ class App:
 
         ttk.Button(
             botoes_frame,
-            text="Executar Testes Automaticos",
+            text="Executar",
             command=self.avaliacao_comparativa
         ).pack(side=tk.LEFT, padx=5)
 
@@ -92,6 +93,7 @@ class App:
             "heapsort": self.algo_frame.heapsort_var.get(),
             "quicksort": self.algo_frame.quicksort_var.get(),
             "algoritmo_hibrido": self.algo_frame.aoh_var.get(),
+            "algoritmo_hibrido_insercao": self.algo_frame.aoh_hoare_var.get(),
         }
     
     # Avaliação comparativa dos algoritmos selecionados
@@ -106,34 +108,31 @@ class App:
         resultados_automaticos = []
         self.resultado_frame.inserir("Executando testes automaticos...\n")
         self.resultado_frame.inserir(f"Entradas: {', '.join(str(t) for t in self.ENTRADAS)}\n")
+        self.resultado_frame.inserir("Teste: 3 execuções por tipo de lista\n")
         self.resultado_frame.inserir("Tipos de lista: crescente, decrescente e aleatoria\n\n")
         self.root.update_idletasks()
 
-        for tamanho in self.ENTRADAS: # Para cada entrada, gerar as listas e executar os algoritmos selecionados
-            resultado_por_tamanho = {
-                "tamanho": tamanho,
-                "tipos": {},
-            }
-
+        for tamanho in self.ENTRADAS: # Para cada entrada, executar todos os algoritmos
             self.resultado_frame.inserir(f"Processando entrada {tamanho}...\n") 
             self.root.update_idletasks()
 
-            for tipo_lista in self.TIPOS_ORDENACAO:
-                lista, erro = gerar_lista(tipo_lista, tamanho)
-                if erro:
-                    messagebox.showerror("Erro", erro)
-                    return
-
-                resultados = avaliacao_comparacao(
-                    lista,
-                    executar_bubble=algoritmos["bubble"],
-                    executar_insertion=algoritmos["insertion"],
-                    executar_mergesort=algoritmos["mergesort"],
-                    executar_heapsort=algoritmos["heapsort"],
-                    executar_quicksort=algoritmos["quicksort"],
-                    executar_hibrido=algoritmos["algoritmo_hibrido"],
-                )
-                resultado_por_tamanho["tipos"][tipo_lista] = resultados
+            # A nova função avaliacao_comparacao já gera as 3 listas e executa 3 vezes cada uma
+            resultados = avaliacao_comparacao(
+                tamanho=tamanho,
+                num_repeticoes=3,
+                executar_bubble=algoritmos["bubble"],
+                executar_insertion=algoritmos["insertion"],
+                executar_mergesort=algoritmos["mergesort"],
+                executar_heapsort=algoritmos["heapsort"],
+                executar_quicksort=algoritmos["quicksort"],
+                executar_hibrido=algoritmos["algoritmo_hibrido"],
+                executar_hibrido_insercao=algoritmos["algoritmo_hibrido_insercao"],
+            )
+            
+            resultado_por_tamanho = {
+                "tamanho": tamanho,
+                "resultados": resultados,
+            }
 
             resultados_automaticos.append(resultado_por_tamanho)
 
@@ -142,30 +141,34 @@ class App:
 
     # Função de apresentação dos resultados
     def formatar_resultados(self, resultados_automaticos, algoritmos):
-        largura = 122
+        largura = 155
         texto = "=" * largura + "\n"
         texto += "AVALIAÇÃO DOS ALGORITMOS DE ORDENACAO\n"
         texto += "=" * largura + "\n\n"
         texto += f"Entradas testadas: {', '.join(str(t) for t in self.ENTRADAS)}\n"
-        texto += "Tipos de lista: Crescente, Decrescente e Aleatoria\n"
-        texto += "Comp.: numero de comparacoes realizadas. Trocas: numero de trocas ou movimentacoes realizadas.\n\n"
+        texto += "Teste: 3 execuções por tipo de lista\n"
+        texto += "Tipos de lista: Crescente, Decrescente e Aleatória\n\n"
 
         for resultado_tamanho in resultados_automaticos:
             tamanho = resultado_tamanho["tamanho"]
+            resultados_algos = resultado_tamanho["resultados"]
+            
             texto += "=" * largura + "\n"
             texto += f"VETOR [{tamanho}]\n"
             texto += "=" * largura + "\n"
+            # Cabeçalho com 3 colunas principais (um para cada tipo de lista)
             texto += (
-                f"{'Lista':<16}"
-                f"{'Ordem Crescente':^35}"
-                f"{'Ordem Decrescente':^35}"
-                f"{'Ordem Aleatoria':^35}\n"
+                f"{'Algoritmo':<22}"
+                f"{'CRESCENTE':^43}"
+                f"{'DECRESCENTE':^43}"
+                f"{'ALEATÓRIA':^43}\n"
             )
+            # Sub-cabeçalho com Tempo, Comp., Trocas para cada tipo
             texto += (
-                f"{'Algoritmo':<16}"
-                f"{'Tempo(s)':>12}{'Comp.':>11}{'Trocas':>12}"
-                f"{'Tempo(s)':>12}{'Comp.':>11}{'Trocas':>12}"
-                f"{'Tempo(s)':>12}{'Comp.':>11}{'Trocas':>12}\n"
+                f"{'':<22}"
+                f"{'Tempo':>13}{'Comp.':>14}{'Trocas':>14}"
+                f"{'Tempo':>13}{'Comp.':>14}{'Trocas':>14}"
+                f"{'Tempo':>13}{'Comp.':>14}{'Trocas':>14}\n"
             )
             texto += "-" * largura + "\n"
 
@@ -173,16 +176,20 @@ class App:
                 if not executar:
                     continue
 
-                metricas = {}
-                for tipo in self.TIPOS_ORDENACAO:
-                    resultado_algoritmo = resultado_tamanho["tipos"][tipo].get(algoritmo)
-                    metricas[tipo] = resultado_algoritmo
+                dados_algo = resultados_algos.get(algoritmo)
+                if dados_algo is None:
+                    continue
+                
+                # Dados por tipo de lista
+                crescente = dados_algo['por_tipo']['crescente']
+                decrescente = dados_algo['por_tipo']['decrescente']
+                aleatoria = dados_algo['por_tipo']['aleatoria']
 
                 texto += (
-                    f"{self.NOMES_ALGORITMOS[algoritmo]:<16}"
-                    f"{self.formatar_metricas(metricas['crescente'])}"
-                    f"{self.formatar_metricas(metricas['decrescente'])}"
-                    f"{self.formatar_metricas(metricas['aleatoria'])}\n"
+                    f"{self.NOMES_ALGORITMOS[algoritmo]:<22}"
+                    f"{self.formatar_linha_tipo(crescente)}"
+                    f"{self.formatar_linha_tipo(decrescente)}"
+                    f"{self.formatar_linha_tipo(aleatoria)}\n"
                 )
 
             texto += "\n"
@@ -190,25 +197,12 @@ class App:
         return texto
 
     @staticmethod
-    def formatar_tempo(tempo):
-        if tempo is None:
-            return "-"
-        return f"{tempo:.6f}"
-
-    @classmethod
-    def formatar_metricas(cls, resultado):
-        if resultado is None:
-            return f"{'-':>12}{'-':>11}{'-':>12}"
-
-        return (
-            f"{cls.formatar_tempo(resultado['tempo_medio']):>12}"
-            f"{cls.formatar_numero(resultado['comparacoes']):>11}"
-            f"{cls.formatar_numero(resultado['trocas']):>12}"
-        )
-
-    @staticmethod
-    def formatar_numero(numero):
-        return str(numero)
+    def formatar_linha_tipo(dados_tipo):
+        """Formata dados de um tipo de lista: Tempo | Comparações | Trocas"""
+        tempo = f"{dados_tipo['tempo_medio']:.6f}s"
+        comp = f"{dados_tipo['comparacoes']:.0f}"
+        trocas = f"{dados_tipo['trocas']:.0f}"
+        return f"{tempo:>13}{comp:>14}{trocas:>14}"
     
     def limpar_resultados(self):
         self.resultado_frame.limpar()
